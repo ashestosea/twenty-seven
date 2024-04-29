@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Twenty-Seven"
 config/version="0.1"
-run/main_scene="res://assets/tile.tscn"
+run/main_scene="res://screens/game.tscn"
 config/features=PackedStringArray("4.2", "Mobile")
 config/icon="res://icon.svg"
 
@@ -28,6 +28,10 @@ window/handheld/orientation=1
 
 project/assembly_name="TwentySeven"
 
+[editor_plugins]
+
+enabled=PackedStringArray()
+
 [input]
 
 ui_touch={
@@ -39,3 +43,8 @@ ui_touch={
 [rendering]
 
 renderer/rendering_method="mobile"
+environment/defaults/default_clear_color=Color(0.93845, 0.93845, 0.93845, 1)
+
+[svgsprite]
+
+compress=false

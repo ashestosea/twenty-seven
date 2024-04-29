@@ -1,3 +1,53 @@
-[gd_scene format=3 uid="uid://bni6mt1jhujn5"]
+[gd_scene load_steps=6 format=3 uid="uid://bni6mt1jhujn5"]
+
+[ext_resource type="Script" path="res://scripts/game_manager.gd" id="3_16do8"]
+[ext_resource type="Script" path="res://scripts/grid.gd" id="8_ycwlx"]
+[ext_resource type="Script" path="res://scripts/input.gd" id="9_57rux"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3g2ie"]
+size = Vector2(576, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xfmyr"]
+size = Vector2(20, 1024)
 
 [node name="Game" type="Node2D"]
+
+[node name="GameManager" type="Node2D" parent="."]
+script = ExtResource("3_16do8")
+
+[node name="Grid" type="Node2D" parent="."]
+script = ExtResource("8_ycwlx")
+
+[node name="BoundTop" type="StaticBody2D" parent="Grid"]
+position = Vector2(0, 200)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Grid/BoundTop"]
+position = Vector2(288, -10)
+shape = SubResource("RectangleShape2D_3g2ie")
+
+[node name="BoundBottom" type="StaticBody2D" parent="Grid"]
+position = Vector2(0, 900)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Grid/BoundBottom"]
+position = Vector2(288, 10)
+shape = SubResource("RectangleShape2D_3g2ie")
+
+[node name="BoundLeft" type="StaticBody2D" parent="Grid"]
+position = Vector2(32, 500)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Grid/BoundLeft"]
+position = Vector2(-10, 0)
+shape = SubResource("RectangleShape2D_xfmyr")
+
+[node name="BoundRight" type="StaticBody2D" parent="Grid"]
+position = Vector2(544, 500)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Grid/BoundRight"]
+position = Vector2(10, 0)
+shape = SubResource("RectangleShape2D_xfmyr")
+
+[node name="Background" type="Polygon2D" parent="Grid"]
+color = Color(0.666667, 0.666667, 0.666667, 1)
+
+[node name="Input" type="Node2D" parent="."]
+script = ExtResource("9_57rux")
