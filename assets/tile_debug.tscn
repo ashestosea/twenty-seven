@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://b32nwbcv2mryb"]
+
+[ext_resource type="Texture2D" uid="uid://d3w867ppe6akg" path="res://assets/tile-gradient.png" id="2_fygbq"]
+
+[node name="Tile" type="Node2D"]
+
+[node name="Sprite" type="Sprite2D" parent="."]
+position = Vector2(2.08616e-06, 9.53674e-07)
+scale = Vector2(0.117188, 0.117188)
+texture = ExtResource("2_fygbq")

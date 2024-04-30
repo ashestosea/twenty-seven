@@ -30,7 +30,7 @@ project/assembly_name="TwentySeven"
 
 [editor_plugins]
 
-enabled=PackedStringArray()
+enabled=PackedStringArray("res://addons/simple-state/plugin.cfg")
 
 [input]
 

@@ -9,14 +9,22 @@ var TILE_WIDTH_HALF = 32;
 
 var _game_manager: GameManager;
 var _grid: Array[Tile];
+var _debug_grid: Array[Node2D];
 var _bound_top: StaticBody2D;
 var _bound_bottom: StaticBody2D;
 var _bound_left: StaticBody2D;
 var _bound_right: StaticBody2D;
 
 @onready var _tile_scene = load("res://assets/tile.tscn");
+@onready var _debug_tile_scene = load("res://assets/tile_debug.tscn");
 @onready var _grid_line_horz_scene = load("res://assets/grid_line_horz.tscn");
 @onready var _grid_line_vert_scene = load("res://assets/grid_line_vert.tscn");
+
+func debug_set_tile_color(i: int, j: int, c: Color):
+	(_debug_grid[index(i,j)].get_node("Sprite") as Sprite2D).modulate = c;
+	
+func debug_set_tile_color2(indx: int, c: Color):
+	(_debug_grid[indx].get_node("Sprite") as Sprite2D).modulate = c;
 
 func _ready():
 	add_tiles();
@@ -63,20 +71,117 @@ func _ready():
 	
 func setup(in_game_manager: GameManager):
 	_game_manager = in_game_manager;
+	_debug_tile_scene = load("res://assets/tile_debug.tscn");
+	for i in GRID_WIDTH:
+		for j in GRID_HEIGHT:
+			_grid.append(null);
+			var dt = _debug_tile_scene.instantiate();
+			dt.position = real_pos(i, j);
+			add_child(dt);
+			_debug_grid.append(dt);
 	
-	for i in GRID_WIDTH * GRID_HEIGHT:
-		_grid.append(null);
+func snap_tiles():
+	_grid.filter(func(tile): return tile != null).map(place_tile);
+	# await get_tree().process_frame;
+	# await get_tree().create_timer(0.1).timeout;
+	# _game_manager._on_snap_choose_new_substate_requested();
+
+func place_tile(tile: Tile):
+	tile.place();
+	tile.enable_collider();
 	
+	if tile.has_moved():
+		_grid[index(tile._grid_pos_cache.x, tile._grid_pos_cache.y)] = null;
+		debug_set_tile_color(tile._grid_pos_cache.x, tile._grid_pos_cache.y, Color.WHITE);
+		tile.snap_to_grid(tile.grid_pos.x, tile.grid_pos.y);
+		print("placing tile at ", tile.grid_pos);
+		tile.name = "tile (%s, %s)" % [tile.grid_pos.x, tile.grid_pos.y];
+		var i = index(tile.grid_pos.x, tile.grid_pos.y);
+		# if _grid[i] != null:
+		# 	print("match at ", tile.grid_pos);
+		# 	tile.set_level(tile.level + 1);
+		# 	var old_tile = _grid[i];
+		# 	old_tile.free();
+		
+		_grid[i] = tile;
+		debug_set_tile_color2(i, Color.GREEN);
+		# print("grid[%s] = %s" % [i, tile.grid_pos]);
+
+#region Fall
+func needs_fall():
+	# for i in GRID_WIDTH:
+	# 	var top = get_column_top_index(i);
+	# 	for j in range(top - 1, -1, -1):
+	# 		if get_tile(i, j) == null:
+	# 			return true;
+	return false;
+
+func fall():
+	for i in GRID_WIDTH:
+		for j in GRID_HEIGHT:
+			var tile = get_tile(i, j);
+			if tile != null:
+				var count = get_column_tile_count(i, j);
+				var fall_amount = j - count;
+				print("%s :: j = %s :: count = %s :: fall_amount = %s" % [tile.grid_pos, j, count, fall_amount]);
+				if fall_amount > 0:
+					_grid[index(i, j)] = null;
+					debug_set_tile_color(i, j, Color.WHITE);
+					# tile.grid_pos = Vector2i(i, j - 1);
+					fall_tile(tile, fall_amount);
+	# if needs_fall():
+	# 	fall();
+
+func fall_tile(tile: Tile, fall_amount: int):
+	tile.enable_collider();
+	var diff = tile.grid_pos.y - fall_amount;
+	print("diff = ", diff);
+	if diff <= 0:
+		fall_amount += diff;
+	print("tile %s fall %s spaces" % [tile.grid_pos, fall_amount]);
+	tile.fall_to_grid(tile.grid_pos.x, tile.grid_pos.y - fall_amount);
+	# tile.snap_to_grid(tile.grid_pos.x, tile.grid_pos.y - fall_amount);
+	# position_tile(tile, tile.grid_pos.x, tile.grid_pos.y)
+	tile.name = "tile (%s, %s)" % [tile.grid_pos.x, tile.grid_pos.y];
+	var i = index(tile.grid_pos.x, tile.grid_pos.y); 
+	_grid[i] = tile;
+	debug_set_tile_color2(i, Color.LIGHT_GREEN);
+#endregion
+
+#region Resolve
+func needs_resolve():
+	return false;
+	
+func resolve():
+	pass
+#endregion
+
+#region Add
 func add_tiles():
 	for i in range(GRID_WIDTH - 1, -1, -1):
 		for j in range(GRID_HEIGHT - 1, -1, -1):
 			var tile = get_tile(i, j);
 			if tile != null:
-				_grid.insert(index(i, j), tile);
+				_grid[index(i, j)] = get_tile(i, j);
+				debug_set_tile_color(i, j, Color.ORANGE_RED);
+				# print("adding tile at ", i, j);
 				tile.position.y += TILE_WIDTH;
 			if j == 0:
 				spawn(i, j);
+
+func spawn(i: int, j: int):
+	var new_tile = _tile_scene.instantiate() as Tile;
+	new_tile.name = "tile (%s, %s)" % [i, j];
+	new_tile.setup(_game_manager, self, randi_range(1, 4));
+	new_tile.snap_to_grid(i, j);
+	add_child(new_tile);
+	get_node(NodePath(new_tile.name)).move_to_front();
+	_grid[index(i, j)] = new_tile;
+	debug_set_tile_color(i, j, Color.DARK_SEA_GREEN);
+	# print("spawn tile ", new_tile.grid_pos);
+#endregion
 	
+#region Utils
 func index(i: int, j: int) -> int:
 	return i * GRID_HEIGHT + j;
 	
@@ -85,46 +190,39 @@ func get_tile(i: int, j: int) -> Tile:
 	if tile_index < _grid.size() - 1 and tile_index >= 0:
 		return _grid[tile_index] as Tile;
 	return null;
-	
-func adjust_grid_tile_pos(tile: Tile):
-	var gp = grid_pos(tile.position);
-	tile.grid_pos = gp;
-	
-func snap_tiles():
-	_grid.filter(func(tile): return tile != null).map(place_tile);
 
-func place_tile(tile: Tile):
-	tile.place();
-	tile.enable_collider();
-	if tile.has_moved():
-		position_tile(tile, tile.grid_pos.x, tile.grid_pos.y)
-		tile.name = "tile (%s, %s)" % [tile.grid_pos.x, tile.grid_pos.y];
-		var i = index(tile.grid_pos.x, tile.grid_pos.y);
-		if _grid[i] != null:
-			tile.set_level(tile.level + 1);
-			_grid[i].free();
-			
-		_grid[i] = tile;
-
-func spawn(i: int, j: int):
-	var newTile = _tile_scene.instantiate() as Tile;
-	newTile.name = "tile (%s, %s)" % [i, j];
-	newTile.setup(_game_manager, randi_range(1, 4));
-	position_tile(newTile, i, j);
-	add_child(newTile);
-	get_node(NodePath(newTile.name)).move_to_front();
-	_grid[index(i, j)] = newTile;
-	
 func grid_pos(pos: Vector2) -> Vector2i:
 	var gp: Vector2i = Vector2i.ZERO;
 	gp.x = roundi((pos.x - TILE_WIDTH_HALF) / TILE_WIDTH) - 1;
 	gp.y = roundi((GRID_POS_Y_MAX - TILE_WIDTH_HALF - pos.y) / TILE_WIDTH);
 	return gp;
+
+func real_pos(i: int, j: int):
+	return Vector2(GRID_POS_X_MIN + TILE_WIDTH_HALF + i * TILE_WIDTH, GRID_POS_Y_MAX - TILE_WIDTH_HALF - (j * TILE_WIDTH));
+
+func adjust_grid_tile_pos(tile: Tile):
+	var gp = grid_pos(tile.position);
+	# print("adjust tile gp to %s" % gp);
+	tile.grid_pos = gp;
+
+func get_column_top_index(column: int, below: int = GRID_HEIGHT) -> int:
+	for j in below:
+		var tile = get_tile(column, j);
+		if tile == null:
+			return j;
+	return 0;
+
+func get_column_tile_count(column: int, below: int = GRID_HEIGHT) -> int:
+	# print("get column tile count column = %s :: below = %s" % [column, below]);
+	var count = 0;
+	for j in range(below - 1, -1, -1):
+		# print("  ", j);
+		if get_tile(column, j) != null:
+			count += 1;
+			# print("    count = ", count);
+	return count;
 	
-func position_tile(tile: Tile, i: int, j: int):
-	tile.set_pos(Vector2(GRID_POS_X_MIN + TILE_WIDTH_HALF + i * TILE_WIDTH, GRID_POS_Y_MAX - TILE_WIDTH_HALF - (j * TILE_WIDTH)), Vector2i(i, j));
-	
-func set_colliders_state(tile: Tile):
+func disable_colliders(tile: Tile):
 	for i in GRID_WIDTH:
 		for j in GRID_HEIGHT:
 			var grid_tile = get_tile(i, j) as Tile;
@@ -133,3 +231,7 @@ func set_colliders_state(tile: Tile):
 			if grid_tile.level == tile.level:
 				grid_tile.disable_collider();
 	tile.enable_collider();
+	
+func enable_colliders():
+	_grid.filter(func(tile): return tile != null).map(func(tile): tile.enable_collider());
+#endregion

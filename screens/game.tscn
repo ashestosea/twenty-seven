@@ -1,6 +1,13 @@
-[gd_scene load_steps=6 format=3 uid="uid://bni6mt1jhujn5"]
+[gd_scene load_steps=13 format=3 uid="uid://bni6mt1jhujn5"]
 
+[ext_resource type="Script" path="res://scripts/state/idle_state.gd" id="2_dvhlb"]
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="3_16do8"]
+[ext_resource type="Script" path="res://scripts/state/pause_state.gd" id="3_yk7r2"]
+[ext_resource type="Script" path="res://scripts/state/drag_state.gd" id="4_4cpi4"]
+[ext_resource type="Script" path="res://scripts/state/snap_state.gd" id="5_7y6ib"]
+[ext_resource type="Script" path="res://scripts/state/fall_state.gd" id="6_n48i5"]
+[ext_resource type="Script" path="res://scripts/state/resolve_state.gd" id="7_provi"]
+[ext_resource type="Script" path="res://scripts/state/add_state.gd" id="8_xiimn"]
 [ext_resource type="Script" path="res://scripts/grid.gd" id="8_ycwlx"]
 [ext_resource type="Script" path="res://scripts/input.gd" id="9_57rux"]
 
@@ -12,8 +19,30 @@ size = Vector2(20, 1024)
 
 [node name="Game" type="Node2D"]
 
-[node name="GameManager" type="Node2D" parent="."]
+[node name="GameManager" type="Node" parent="."]
 script = ExtResource("3_16do8")
+
+[node name="Idle" type="Node" parent="GameManager"]
+script = ExtResource("2_dvhlb")
+
+[node name="Pause" type="Node" parent="GameManager"]
+script = ExtResource("3_yk7r2")
+
+[node name="Drag" type="Node" parent="GameManager"]
+script = ExtResource("4_4cpi4")
+
+[node name="Snap" type="Node" parent="GameManager"]
+script = ExtResource("5_7y6ib")
+timer = 0.01
+
+[node name="Fall" type="Node" parent="GameManager"]
+script = ExtResource("6_n48i5")
+
+[node name="Resolve" type="Node" parent="GameManager"]
+script = ExtResource("7_provi")
+
+[node name="Add" type="Node" parent="GameManager"]
+script = ExtResource("8_xiimn")
 
 [node name="Grid" type="Node2D" parent="."]
 script = ExtResource("8_ycwlx")
@@ -51,3 +80,11 @@ color = Color(0.666667, 0.666667, 0.666667, 1)
 
 [node name="Input" type="Node2D" parent="."]
 script = ExtResource("9_57rux")
+
+[connection signal="choose_new_substate_requested" from="GameManager/Idle" to="GameManager" method="_on_idle_choose_new_substate_requested"]
+[connection signal="choose_new_substate_requested" from="GameManager/Pause" to="GameManager" method="_on_pause_choose_new_substate_requested"]
+[connection signal="choose_new_substate_requested" from="GameManager/Drag" to="GameManager" method="_on_drag_choose_new_substate_requested"]
+[connection signal="choose_new_substate_requested" from="GameManager/Snap" to="GameManager" method="_on_snap_choose_new_substate_requested"]
+[connection signal="choose_new_substate_requested" from="GameManager/Fall" to="GameManager" method="_on_fall_choose_new_substate_requested"]
+[connection signal="choose_new_substate_requested" from="GameManager/Resolve" to="GameManager" method="_on_resolve_choose_new_substate_requested"]
+[connection signal="choose_new_substate_requested" from="GameManager/Add" to="GameManager" method="_on_add_choose_new_substate_requested"]
