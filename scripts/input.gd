@@ -7,7 +7,7 @@ var _dragging: bool;
 
 func _physics_process(_delta):
 	if _tile != null and Input.is_action_pressed("ui_touch"):
-		_tile.slide_to_real(get_viewport().get_mouse_position());
+		_tile.slide_to_real(get_viewport().get_mouse_position(), false);
 	
 	if _dragging and not Input.is_action_pressed("ui_touch"):
 		_dragging = false;

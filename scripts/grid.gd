@@ -79,24 +79,24 @@ func setup(in_game_manager: GameManager):
 			dt.position = real_pos(i, j);
 			add_child(dt);
 			_debug_grid.append(dt);
-	
+
+#region Snap
 func snap_tiles():
-	_grid.filter(func(tile): return tile != null).map(place_tile);
+	_grid.filter(func(tile): return tile != null).map(snap_tile);
 	# await get_tree().process_frame;
 	# await get_tree().create_timer(0.1).timeout;
 	# _game_manager._on_snap_choose_new_substate_requested();
 
-func place_tile(tile: Tile):
+func snap_tile(tile: Tile):
 	tile.place();
 	tile.enable_collider();
 	
 	if tile.has_moved():
-		_grid[index(tile._grid_pos_cache.x, tile._grid_pos_cache.y)] = null;
+		_grid[index_vec(tile._grid_pos_cache)] = null;
 		debug_set_tile_color(tile._grid_pos_cache.x, tile._grid_pos_cache.y, Color.WHITE);
 		tile.snap_to_grid(tile.grid_pos.x, tile.grid_pos.y);
-		print("placing tile at ", tile.grid_pos);
 		tile.name = "tile (%s, %s)" % [tile.grid_pos.x, tile.grid_pos.y];
-		var i = index(tile.grid_pos.x, tile.grid_pos.y);
+		var i = index_vec(tile.grid_pos);
 		# if _grid[i] != null:
 		# 	print("match at ", tile.grid_pos);
 		# 	tile.set_level(tile.level + 1);
@@ -104,8 +104,9 @@ func place_tile(tile: Tile):
 		# 	old_tile.free();
 		
 		_grid[i] = tile;
-		debug_set_tile_color2(i, Color.GREEN);
+		debug_set_tile_color2(i, Color.BLUE);
 		# print("grid[%s] = %s" % [i, tile.grid_pos]);
+#endregion
 
 #region Fall
 func needs_fall():
@@ -143,9 +144,9 @@ func fall_tile(tile: Tile, fall_amount: int):
 	# tile.snap_to_grid(tile.grid_pos.x, tile.grid_pos.y - fall_amount);
 	# position_tile(tile, tile.grid_pos.x, tile.grid_pos.y)
 	tile.name = "tile (%s, %s)" % [tile.grid_pos.x, tile.grid_pos.y];
-	var i = index(tile.grid_pos.x, tile.grid_pos.y); 
+	var i = index_vec(tile.grid_pos); 
 	_grid[i] = tile;
-	debug_set_tile_color2(i, Color.LIGHT_GREEN);
+	debug_set_tile_color2(i, Color.BROWN);
 #endregion
 
 #region Resolve
@@ -163,7 +164,7 @@ func add_tiles():
 			var tile = get_tile(i, j);
 			if tile != null:
 				_grid[index(i, j)] = get_tile(i, j);
-				debug_set_tile_color(i, j, Color.ORANGE_RED);
+				debug_set_tile_color(i, j, Color.RED);
 				# print("adding tile at ", i, j);
 				tile.position.y += TILE_WIDTH;
 			if j == 0:
@@ -171,19 +172,20 @@ func add_tiles():
 
 func spawn(i: int, j: int):
 	var new_tile = _tile_scene.instantiate() as Tile;
-	new_tile.name = "tile (%s, %s)" % [i, j];
-	new_tile.setup(_game_manager, self, randi_range(1, 4));
-	new_tile.snap_to_grid(i, j);
+	new_tile.setup(_game_manager, self, i, j, randi_range(1, 4));
 	add_child(new_tile);
 	get_node(NodePath(new_tile.name)).move_to_front();
 	_grid[index(i, j)] = new_tile;
-	debug_set_tile_color(i, j, Color.DARK_SEA_GREEN);
+	debug_set_tile_color(i, j, Color.BLACK);
 	# print("spawn tile ", new_tile.grid_pos);
 #endregion
 	
 #region Utils
 func index(i: int, j: int) -> int:
 	return i * GRID_HEIGHT + j;
+
+func index_vec(pos: Vector2i):
+	return pos.x * GRID_HEIGHT + pos.y;
 	
 func get_tile(i: int, j: int) -> Tile:
 	var tile_index = index(i, j);
@@ -199,11 +201,6 @@ func grid_pos(pos: Vector2) -> Vector2i:
 
 func real_pos(i: int, j: int):
 	return Vector2(GRID_POS_X_MIN + TILE_WIDTH_HALF + i * TILE_WIDTH, GRID_POS_Y_MAX - TILE_WIDTH_HALF - (j * TILE_WIDTH));
-
-func adjust_grid_tile_pos(tile: Tile):
-	var gp = grid_pos(tile.position);
-	# print("adjust tile gp to %s" % gp);
-	tile.grid_pos = gp;
 
 func get_column_top_index(column: int, below: int = GRID_HEIGHT) -> int:
 	for j in below:

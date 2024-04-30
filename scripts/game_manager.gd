@@ -75,10 +75,8 @@ func drag_start(tile: Tile):
 	_drag_tile = tile;
 	_input.select_tile(tile);
 	_grid.disable_colliders(tile);
-	_state_drag.set_tile(tile);
 	change_state_node(_state_drag);
 	
 func drop():
 	_drag_tile = null;
-	_state_drag.set_tile(null);
 	change_state_node(_state_snap);
