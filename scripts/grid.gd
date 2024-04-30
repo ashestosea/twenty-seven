@@ -21,10 +21,9 @@ var _bound_right: StaticBody2D;
 @onready var _grid_line_vert_scene = load("res://assets/grid_line_vert.tscn");
 
 func debug_set_tile_color(i: int, j: int, c: Color):
-	(_debug_grid[index(i,j)].get_node("Sprite") as Sprite2D).modulate = c;
-	
-func debug_set_tile_color2(indx: int, c: Color):
-	(_debug_grid[indx].get_node("Sprite") as Sprite2D).modulate = c;
+	var index = i * GRID_HEIGHT + j;
+	(_debug_grid[index].get_node("Sprite") as Sprite2D).modulate = c;
+	pass
 
 func _ready():
 	add_tiles();
@@ -74,7 +73,6 @@ func setup(in_game_manager: GameManager):
 	_debug_tile_scene = load("res://assets/tile_debug.tscn");
 	for i in GRID_WIDTH:
 		for j in GRID_HEIGHT:
-			_grid.append(null);
 			var dt = _debug_tile_scene.instantiate();
 			dt.position = real_pos(i, j);
 			add_child(dt);
@@ -82,30 +80,20 @@ func setup(in_game_manager: GameManager):
 
 #region Snap
 func snap_tiles():
-	_grid.filter(func(tile): return tile != null).map(snap_tile);
-	# await get_tree().process_frame;
-	# await get_tree().create_timer(0.1).timeout;
-	# _game_manager._on_snap_choose_new_substate_requested();
+	_grid.map(snap_tile);
 
 func snap_tile(tile: Tile):
 	tile.place();
 	tile.enable_collider();
 	
 	if tile.has_moved():
-		_grid[index_vec(tile._grid_pos_cache)] = null;
-		debug_set_tile_color(tile._grid_pos_cache.x, tile._grid_pos_cache.y, Color.WHITE);
 		tile.snap_to_grid(tile.grid_pos.x, tile.grid_pos.y);
-		tile.name = "tile (%s, %s)" % [tile.grid_pos.x, tile.grid_pos.y];
-		var i = index_vec(tile.grid_pos);
+		# var i = index_vec(tile.grid_pos);
 		# if _grid[i] != null:
 		# 	print("match at ", tile.grid_pos);
 		# 	tile.set_level(tile.level + 1);
 		# 	var old_tile = _grid[i];
 		# 	old_tile.free();
-		
-		_grid[i] = tile;
-		debug_set_tile_color2(i, Color.BLUE);
-		# print("grid[%s] = %s" % [i, tile.grid_pos]);
 #endregion
 
 #region Fall
@@ -118,35 +106,15 @@ func needs_fall():
 	return false;
 
 func fall():
-	for i in GRID_WIDTH:
-		for j in GRID_HEIGHT:
-			var tile = get_tile(i, j);
-			if tile != null:
-				var count = get_column_tile_count(i, j);
-				var fall_amount = j - count;
-				print("%s :: j = %s :: count = %s :: fall_amount = %s" % [tile.grid_pos, j, count, fall_amount]);
-				if fall_amount > 0:
-					_grid[index(i, j)] = null;
-					debug_set_tile_color(i, j, Color.WHITE);
-					# tile.grid_pos = Vector2i(i, j - 1);
-					fall_tile(tile, fall_amount);
-	# if needs_fall():
-	# 	fall();
+	for tile in _grid:
+		var count = get_column_size_below(tile.grid_pos.x, tile.grid_pos.y);
+		var fall_amount = tile.grid_pos.y - count;
+		if fall_amount > 0:
+			fall_tile(tile, fall_amount)
 
 func fall_tile(tile: Tile, fall_amount: int):
 	tile.enable_collider();
-	var diff = tile.grid_pos.y - fall_amount;
-	print("diff = ", diff);
-	if diff <= 0:
-		fall_amount += diff;
-	print("tile %s fall %s spaces" % [tile.grid_pos, fall_amount]);
 	tile.fall_to_grid(tile.grid_pos.x, tile.grid_pos.y - fall_amount);
-	# tile.snap_to_grid(tile.grid_pos.x, tile.grid_pos.y - fall_amount);
-	# position_tile(tile, tile.grid_pos.x, tile.grid_pos.y)
-	tile.name = "tile (%s, %s)" % [tile.grid_pos.x, tile.grid_pos.y];
-	var i = index_vec(tile.grid_pos); 
-	_grid[i] = tile;
-	debug_set_tile_color2(i, Color.BROWN);
 #endregion
 
 #region Resolve
@@ -159,39 +127,43 @@ func resolve():
 
 #region Add
 func add_tiles():
-	for i in range(GRID_WIDTH - 1, -1, -1):
-		for j in range(GRID_HEIGHT - 1, -1, -1):
-			var tile = get_tile(i, j);
-			if tile != null:
-				_grid[index(i, j)] = get_tile(i, j);
-				debug_set_tile_color(i, j, Color.RED);
-				# print("adding tile at ", i, j);
-				tile.position.y += TILE_WIDTH;
-			if j == 0:
-				spawn(i, j);
+	for i in GRID_WIDTH:
+		var tiles = get_tiles_in_column(i);
+		if tiles.size() < GRID_HEIGHT:
+			for tile in tiles:
+				tile.fall_to_grid(i, tile.grid_pos.y + 1);
+			spawn(i, 0);
 
 func spawn(i: int, j: int):
 	var new_tile = _tile_scene.instantiate() as Tile;
 	new_tile.setup(_game_manager, self, i, j, randi_range(1, 4));
 	add_child(new_tile);
 	get_node(NodePath(new_tile.name)).move_to_front();
-	_grid[index(i, j)] = new_tile;
-	debug_set_tile_color(i, j, Color.BLACK);
-	# print("spawn tile ", new_tile.grid_pos);
+	_grid.append(new_tile);
 #endregion
 	
 #region Utils
-func index(i: int, j: int) -> int:
-	return i * GRID_HEIGHT + j;
+# func index(i: int, j: int) -> int:
+# 	return i * GRID_HEIGHT + j;
 
-func index_vec(pos: Vector2i):
-	return pos.x * GRID_HEIGHT + pos.y;
+# func index_vec(pos: Vector2i):
+# 	return pos.x * GRID_HEIGHT + pos.y;
 	
-func get_tile(i: int, j: int) -> Tile:
-	var tile_index = index(i, j);
-	if tile_index < _grid.size() - 1 and tile_index >= 0:
-		return _grid[tile_index] as Tile;
-	return null;
+# func get_tile(i: int, j: int) -> Tile:
+# 	var tile_index = index(i, j);
+# 	if tile_index < _grid.size() - 1 and tile_index >= 0:
+# 		return _grid[tile_index] as Tile;
+# 	return null;
+	
+func get_tile_with_grid_pos(i: int, j: int) -> Tile:
+	var gp = Vector2i(i, j);
+	return _grid.filter(func(tile): return tile.grid_pos == gp).front();
+
+func get_tiles_in_column(column: int) -> Array[Tile]:
+	var tiles: Array[Tile] = [];
+	_grid.filter(func(tile): return tile.grid_pos.x == column).map(func(tile): tiles.append(tile));
+	tiles.sort_custom(func(a, b): return a.grid_pos < b.grid_pos);
+	return tiles;
 
 func grid_pos(pos: Vector2) -> Vector2i:
 	var gp: Vector2i = Vector2i.ZERO;
@@ -202,33 +174,26 @@ func grid_pos(pos: Vector2) -> Vector2i:
 func real_pos(i: int, j: int):
 	return Vector2(GRID_POS_X_MIN + TILE_WIDTH_HALF + i * TILE_WIDTH, GRID_POS_Y_MAX - TILE_WIDTH_HALF - (j * TILE_WIDTH));
 
-func get_column_top_index(column: int, below: int = GRID_HEIGHT) -> int:
-	for j in below:
-		var tile = get_tile(column, j);
-		if tile == null:
-			return j;
-	return 0;
+# func get_column_top_index(column: int, below: int = GRID_HEIGHT) -> int:
+# 	var tiles = get_tiles_in_column(column);
+# 	for j in below:
+# 		var tile = tiles[j];
+# 		if tile == null:
+# 			return j - 1;
+# 	return 0;
 
-func get_column_tile_count(column: int, below: int = GRID_HEIGHT) -> int:
-	# print("get column tile count column = %s :: below = %s" % [column, below]);
-	var count = 0;
-	for j in range(below - 1, -1, -1):
-		# print("  ", j);
-		if get_tile(column, j) != null:
-			count += 1;
-			# print("    count = ", count);
+func get_column_size_below(column: int, below: int = GRID_HEIGHT) -> int:
+	var tiles = get_tiles_in_column(column);
+	var count = tiles.filter(func(tile): return tile.grid_pos.y < below).size();
 	return count;
 	
 func disable_colliders(tile: Tile):
-	for i in GRID_WIDTH:
-		for j in GRID_HEIGHT:
-			var grid_tile = get_tile(i, j) as Tile;
-			if grid_tile == null:
-				continue;
-			if grid_tile.level == tile.level:
-				grid_tile.disable_collider();
+	_grid.filter(func(t):
+			return t.level == tile.level\
+			and t != tile)\
+		.map(func(t): t.disable_collider());
 	tile.enable_collider();
 	
 func enable_colliders():
-	_grid.filter(func(tile): return tile != null).map(func(tile): tile.enable_collider());
+	_grid.map(func(tile): tile.enable_collider());
 #endregion
