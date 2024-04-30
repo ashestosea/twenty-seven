@@ -24,6 +24,7 @@ func _ready():
 	_state_add.setup(_grid);
 	
 	status = Status.ACTIVE;
+	change_state_node(_state_idle);
 	
 func _process(_delta):
 	if _request_pause:
@@ -72,6 +73,9 @@ func _on_add_choose_new_substate_requested():
 		change_state_node(_state_idle);
 
 func drag_start(tile: Tile):
+	if get_active_substate() != _state_idle:
+		return;
+		
 	_drag_tile = tile;
 	_input.select_tile(tile);
 	_grid.disable_colliders(tile);
