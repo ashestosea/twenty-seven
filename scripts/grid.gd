@@ -85,7 +85,28 @@ func snap_tiles():
 
 #region Fall
 func needs_fall():
-	# print("Needs fall?");
+	for i in GRID_WIDTH:
+		var tiles = get_column_tiles_below(i);
+		var tiles_mask: Array[int] = [];
+		tiles_mask.resize(GRID_HEIGHT);
+		tiles_mask.fill(1);
+		
+		for tile in tiles:
+			tiles_mask[tile.grid_pos.y] = 0;
+		
+		for t in tiles.size():
+			var fall_amount = 0;
+			for c in range(0, tiles[t].grid_pos.y):
+				fall_amount += tiles_mask[c];
+			if (tiles[t].grid_pos.y > 0 and tiles[t-1].level == tiles[t].level):
+				fall_amount += 1;
+			# fall_tile(tiles[t], fall_amount);
+			if fall_amount > 0:
+				return true;
+	return false;
+			
+func needs_fall_old():
+	print("Needs fall?");
 	for i in GRID_WIDTH:
 		var tiles = get_column_tiles_below(i);
 		# print(" column count = ", tiles.size());
@@ -110,8 +131,12 @@ func fall():
 		tiles_mask.resize(GRID_HEIGHT);
 		tiles_mask.fill(1);
 		
-		for tile in tiles:
-			tiles_mask[tile.grid_pos.y] = 0;
+		for t in tiles.size():
+			var index = tiles[t].grid_pos.y;
+			if (tiles[t].grid_pos.y > 0 and tiles[t-1].level == tiles[t].level):
+				tiles_mask[index] += 1;
+			else:
+				tiles_mask[index] = 0;
 		
 		for t in tiles.size():
 			var fall_amount = 0;
