@@ -1,5 +1,11 @@
 class_name GameManager extends State
 
+enum GameMode {
+	TORTOISE,
+	HARE
+}
+
+var _game_mode: GameMode;
 var _drag_tile: Tile;
 var _request_pause: bool;
 
@@ -22,6 +28,8 @@ func _ready():
 	_state_fall.setup(_grid);
 	_state_resolve.setup(_grid);
 	_state_add.setup(_grid);
+	
+	_game_mode = GameMode.TORTOISE;
 	
 	status = Status.ACTIVE;
 	change_state_node(_state_idle);
@@ -48,29 +56,34 @@ func _on_drag_choose_new_substate_requested():
 func _on_snap_choose_new_substate_requested():
 	change_state_node(_state_fall);
 
+# Fall
 func _on_fall_choose_new_substate_requested():
-	if _grid.needs_resolve():
-		change_state_node(_state_resolve);
-	elif _drag_tile != null:
-		change_state_node(_state_drag);
-	else:
-		change_state_node(_state_idle);
+	change_state_node(_state_resolve);
+	
+	# if _grid.needs_resolve():
+	# 	change_state_node(_state_resolve);
+	# elif _drag_tile != null:
+	# 	change_state_node(_state_drag);
+	# else:
+	# 	change_state_node(_state_idle);
 
 # Resolve
 func _on_resolve_choose_new_substate_requested():
 	if _grid.needs_fall():
 		change_state_node(_state_fall);
-	elif true: # If needs add
+	elif _needs_add():
 		change_state_node(_state_add);
+	elif _drag_tile != null:
+		change_state_node(_state_drag);
 	else:
 		change_state_node(_state_idle);
 
 # Add
 func _on_add_choose_new_substate_requested():
-	if _grid.needs_resolve():
-		change_state_node(_state_resolve);
-	else:
-		change_state_node(_state_idle);
+	# if _grid.needs_resolve():
+	change_state_node(_state_resolve);
+	# else:
+	# 	change_state_node(_state_idle);
 
 func drag_start(tile: Tile):
 	if get_active_substate() != _state_idle:
@@ -84,3 +97,14 @@ func drag_start(tile: Tile):
 func drop():
 	_drag_tile = null;
 	change_state_node(_state_snap);
+	
+func _needs_add() -> bool:
+	match _game_mode:
+		GameMode.TORTOISE:
+			# If tile moved without a match
+			return true;
+		GameMode.HARE:
+			# If timer is out or no matches available
+			return true;
+		_:
+			return false;

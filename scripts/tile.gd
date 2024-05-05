@@ -7,7 +7,6 @@ var _game_manager: GameManager;
 var _grid: Grid;
 var _grid_pos_cache: Vector2i;
 var _speed = 50;
-var _selected = false;
 var _slide = false;
 var _slide_target: Vector2;
 var _snap = false;
@@ -49,10 +48,8 @@ func _physics_process(delta):
 			set_tile_name(grid_pos);
 
 func _on_input_event(_viewport, event, _shape_idx):
-	if event.is_action_pressed("ui_touch") and not _selected:
+	if event.is_action_pressed("ui_touch"):
 		_game_manager.drag_start(self);
-	if event.is_action("ui_touch"):
-		_selected = event.is_pressed();
 
 func setup(in_game_manager: GameManager, in_grid: Grid, i: int, j: int, in_level: int):
 	_game_manager = in_game_manager;
@@ -82,11 +79,11 @@ func set_level(in_level: int):
 			Color.DEEP_SKY_BLUE];
 	$Sprite.modulate = colors[level-1];
 	
+func increase_level():
+	set_level(level + 1);
+	
 func has_moved():
 	return grid_pos != _grid_pos_cache;
-
-func place():
-	_selected = false;
 	
 func fall_to_real(new_pos: Vector2, set_cache: bool = true):
 	_slide = false;
@@ -95,8 +92,11 @@ func fall_to_real(new_pos: Vector2, set_cache: bool = true):
 	_fall_target = new_pos;
 	_set_cache = set_cache;
 	
-func fall_to_grid(i: int, j: int, set_cache: bool = true):
-	fall_to_real(_grid.real_pos(i, j), set_cache);
+func fall_to_grid(i: int = -1, j: int = -1, set_cache: bool = true):
+	if i == -1 or j == -1:
+		fall_to_real(_grid.real_pos(grid_pos.x, grid_pos.y), set_cache);
+	else:
+		fall_to_real(_grid.real_pos(i, j), set_cache);
 	
 func snap_to_real(new_pos: Vector2, set_cache: bool = true):
 	_slide = false;
@@ -105,8 +105,11 @@ func snap_to_real(new_pos: Vector2, set_cache: bool = true):
 	_snap_target = new_pos;
 	_set_cache = set_cache;
 	
-func snap_to_grid(i: int, j: int, set_cache: bool = true):
-	snap_to_real(_grid.real_pos(i, j), set_cache);
+func snap_to_grid(i: int = -1, j: int = -1, set_cache: bool = true):
+	if i == -1 or j == -1:
+		snap_to_real(_grid.real_pos(grid_pos.x, grid_pos.y), set_cache);
+	else:
+		snap_to_real(_grid.real_pos(i, j), set_cache);
 	
 func slide_to_real(new_pos: Vector2, set_cache: bool = true):
 	_snap = false;
@@ -115,8 +118,11 @@ func slide_to_real(new_pos: Vector2, set_cache: bool = true):
 	_slide_target = new_pos;
 	_set_cache = set_cache;
 	
-func slide_to_grid(i: int, j: int, set_cache: bool = true):
-	slide_to_real(_grid.real_pos(i, j), set_cache);
+func slide_to_grid(i: int = -1, j: int = -1, set_cache: bool = true):
+	if i == -1 or j == -1:
+		slide_to_real(_grid.real_pos(grid_pos.x, grid_pos.y), set_cache);
+	else:
+		slide_to_real(_grid.real_pos(i, j), set_cache);
 	
 func enable_collider():
 	_collider.disabled = false;
