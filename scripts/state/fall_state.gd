@@ -4,9 +4,9 @@ class_name FallState
 var _grid: Grid;
 
 func _enter():
-	print("Enter Fall");
+	print("Enter Fall :: ", Time.get_ticks_msec());
 	_grid.fall();
-	await get_tree().create_timer(0.01).timeout;
+	await get_tree().create_timer(1).timeout;
 	choose_new_substate_requested.emit();
 	
 # func _update(_delta):

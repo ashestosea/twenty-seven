@@ -80,10 +80,7 @@ func _on_resolve_choose_new_substate_requested():
 
 # Add
 func _on_add_choose_new_substate_requested():
-	# if _grid.needs_resolve():
 	change_state_node(_state_resolve);
-	# else:
-	# 	change_state_node(_state_idle);
 
 func drag_start(tile: Tile):
 	if get_active_substate() != _state_idle:
@@ -97,14 +94,18 @@ func drag_start(tile: Tile):
 func drop():
 	_drag_tile = null;
 	change_state_node(_state_snap);
-	
+
+var add_debug = false;
+
 func _needs_add() -> bool:
 	match _game_mode:
 		GameMode.TORTOISE:
 			# If tile moved without a match
-			return true;
+			add_debug = !add_debug;
+			return add_debug;
 		GameMode.HARE:
 			# If timer is out or no matches available
-			return true;
+			add_debug = !add_debug;
+			return add_debug;
 		_:
 			return false;

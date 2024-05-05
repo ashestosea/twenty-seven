@@ -4,7 +4,7 @@ class_name SnapState
 var _grid: Grid;
 
 func _enter():
-	print("Enter Snap");
+	print("Enter Snap :: ", Time.get_ticks_msec());
 	_grid.enable_colliders();
 	_grid.snap_tiles();
 	

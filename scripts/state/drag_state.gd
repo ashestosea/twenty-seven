@@ -3,7 +3,7 @@ extends State
 var _grid: Grid;
 
 func _enter():
-	print("Enter Drag");
+	print("Enter Drag :: ", Time.get_ticks_msec());
 
 func _update(_delta):
 	print("Update Drag");
