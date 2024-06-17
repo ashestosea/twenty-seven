@@ -28,12 +28,12 @@ func _ready():
 	_state_fall.setup(_grid);
 	_state_resolve.setup(_grid);
 	_state_add.setup(_grid);
-	
+
 	_game_mode = GameMode.TORTOISE;
-	
+
 	status = Status.ACTIVE;
 	change_state_node(_state_idle);
-	
+
 func _process(_delta):
 	if _request_pause:
 		pass
@@ -59,7 +59,7 @@ func _on_snap_choose_new_substate_requested():
 # Fall
 func _on_fall_choose_new_substate_requested():
 	change_state_node(_state_resolve);
-	
+
 	# if _grid.needs_resolve():
 	# 	change_state_node(_state_resolve);
 	# elif _drag_tile != null:
@@ -69,6 +69,10 @@ func _on_fall_choose_new_substate_requested():
 
 # Resolve
 func _on_resolve_choose_new_substate_requested():
+	var img = get_viewport().get_texture().get_image();
+	var img_name = ProjectSettings.globalize_path("user://%s.png" % [Time.get_datetime_string_from_system()])
+	print(img_name)
+	img.save_png(img_name);
 	if _grid.needs_fall():
 		change_state_node(_state_fall);
 	elif _needs_add():
@@ -80,20 +84,28 @@ func _on_resolve_choose_new_substate_requested():
 
 # Add
 func _on_add_choose_new_substate_requested():
+	var img = get_viewport().get_texture().get_image();
+	var img_name = ProjectSettings.globalize_path("user://%s.png" % [Time.get_datetime_string_from_system()])
+	img.save_png(img_name);
+	#var proc = OS.create_process(, [img_name]);
+	#print("viewnior proc = %s" % [proc])
 	change_state_node(_state_resolve);
 
 func drag_start(tile: Tile):
 	if get_active_substate() != _state_idle:
 		return;
-		
+
 	_drag_tile = tile;
+	_drag_tile.held = true;
 	_input.select_tile(tile);
 	_grid.disable_colliders(tile);
 	change_state_node(_state_drag);
-	
+
 func drop():
-	_drag_tile = null;
-	change_state_node(_state_snap);
+	if _drag_tile != null:
+		_drag_tile.held = false;
+		_drag_tile = null;
+		change_state_node(_state_snap);
 
 var add_debug = false;
 

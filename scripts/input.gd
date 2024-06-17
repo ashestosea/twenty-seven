@@ -11,6 +11,7 @@ func _physics_process(_delta):
 	
 	if _dragging and not Input.is_action_pressed("ui_touch"):
 		_dragging = false;
+		# _tile.held = false;
 		_tile = null;
 		_game_manager.drop();
 		

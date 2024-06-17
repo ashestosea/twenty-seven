@@ -2,6 +2,7 @@ class_name Tile extends CharacterBody2D
 
 var level: int;
 var grid_pos: Vector2i;
+var held: bool;
 
 var _game_manager: GameManager;
 var _grid: Grid;
@@ -59,10 +60,10 @@ func setup(in_game_manager: GameManager, in_grid: Grid, i: int, j: int, in_level
 	position = _grid.real_pos(i, j);
 	set_tile_name(grid_pos);
 	set_level(in_level);
-	
+
 func set_tile_name(in_grid_pos: Vector2i):
 	name = "Tile (%s, %s)" % [in_grid_pos.x, in_grid_pos.y];
-	
+
 func set_level(in_level: int):
 	level = in_level;
 	$Label.text = String.num(level);
@@ -77,56 +78,56 @@ func set_level(in_level: int):
 			Color.CORNFLOWER_BLUE,\
 			Color.FOREST_GREEN,\
 			Color.DEEP_SKY_BLUE];
-	$Sprite.modulate = colors[level-1];
-	
+	$Sprite.modulate = colors[(level-1) % colors.size()];
+
 func increase_level():
 	set_level(level + 1);
-	
+
 func has_moved():
 	return grid_pos != _grid_pos_cache;
-	
+
 func fall_to_real(new_pos: Vector2, set_cache: bool = true):
 	_slide = false;
 	_snap = false;
 	_fall = true;
 	_fall_target = new_pos;
 	_set_cache = set_cache;
-	
+
 func fall_to_grid(i: int = -1, j: int = -1, set_cache: bool = true):
 	if i == -1 or j == -1:
 		fall_to_real(_grid.real_pos(grid_pos.x, grid_pos.y), set_cache);
 	else:
 		fall_to_real(_grid.real_pos(i, j), set_cache);
-	
+
 func snap_to_real(new_pos: Vector2, set_cache: bool = true):
 	_slide = false;
 	_fall = false;
 	_snap = true;
 	_snap_target = new_pos;
 	_set_cache = set_cache;
-	
+
 func snap_to_grid(i: int = -1, j: int = -1, set_cache: bool = true):
 	if i == -1 or j == -1:
 		snap_to_real(_grid.real_pos(grid_pos.x, grid_pos.y), set_cache);
 	else:
 		snap_to_real(_grid.real_pos(i, j), set_cache);
-	
+
 func slide_to_real(new_pos: Vector2, set_cache: bool = true):
 	_snap = false;
 	_fall = false;
 	_slide = true;
 	_slide_target = new_pos;
 	_set_cache = set_cache;
-	
+
 func slide_to_grid(i: int = -1, j: int = -1, set_cache: bool = true):
 	if i == -1 or j == -1:
 		slide_to_real(_grid.real_pos(grid_pos.x, grid_pos.y), set_cache);
 	else:
 		slide_to_real(_grid.real_pos(i, j), set_cache);
-	
+
 func enable_collider():
 	_collider.disabled = false;
-	
+
 func disable_collider():
 	_collider.disabled = true;
 

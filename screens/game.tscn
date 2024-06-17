@@ -33,15 +33,12 @@ script = ExtResource("4_4cpi4")
 
 [node name="Snap" type="Node" parent="GameManager"]
 script = ExtResource("5_7y6ib")
-timer = 1.0
 
 [node name="Fall" type="Node" parent="GameManager"]
 script = ExtResource("6_n48i5")
-timer = 1.0
 
 [node name="Resolve" type="Node" parent="GameManager"]
 script = ExtResource("7_provi")
-timer = 1.0
 
 [node name="Add" type="Node" parent="GameManager"]
 script = ExtResource("8_xiimn")
