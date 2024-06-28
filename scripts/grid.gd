@@ -1,5 +1,7 @@
 class_name Grid extends Node2D
 
+signal match_made;
+
 var GRID_WIDTH = 7;
 var GRID_HEIGHT = 8;
 var GRID_POS_X_MIN = 64;
@@ -200,6 +202,8 @@ func resolve():
 		_grid[d].queue_free();
 		_grid.remove_at(d);
 	for u in upgrade_tiles:
+		#prints("resolve upgrading tile %s at pos %s :: from level %s to %s" % [u, _grid[u].grid_pos, _grid[u].level, _grid[u].level + 1]);
+		match_made.emit();
 		_grid[u].increase_level();
 #endregion
 

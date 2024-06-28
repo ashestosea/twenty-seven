@@ -7,6 +7,8 @@ enum GameMode {
 
 var _game_mode: GameMode;
 var _drag_tile: Tile;
+var _has_added: bool;
+var _current_matches: int;
 var _request_pause: bool;
 
 @onready var _state_idle: State = get_node("Idle");
@@ -28,6 +30,8 @@ func _ready():
 	_state_fall.setup(_grid);
 	_state_resolve.setup(_grid);
 	_state_add.setup(_grid);
+
+	_grid.match_made.connect(_increment_current_matches);
 
 	_game_mode = GameMode.TORTOISE;
 
@@ -76,6 +80,7 @@ func _on_resolve_choose_new_substate_requested():
 	if _grid.needs_fall():
 		change_state_node(_state_fall);
 	elif _needs_add():
+		_has_added = true;
 		change_state_node(_state_add);
 	elif _drag_tile != null:
 		change_state_node(_state_drag);
@@ -95,6 +100,8 @@ func drag_start(tile: Tile):
 	if get_active_substate() != _state_idle:
 		return;
 
+	_current_matches = 0;
+	_has_added = false;
 	_drag_tile = tile;
 	_drag_tile.held = true;
 	_input.select_tile(tile);
@@ -108,14 +115,17 @@ func drop_held_tile():
 		change_state_node(_state_snap);
 		_input.drop_held_tile();
 
+
+func _increment_current_matches():
+	_current_matches += 1;
+
 var add_debug = false;
 
 func _needs_add() -> bool:
 	match _game_mode:
 		GameMode.TORTOISE:
 			# If tile moved without a match
-			add_debug = !add_debug;
-			return add_debug;
+			return _current_matches == 0 and !_has_added;
 		GameMode.HARE:
 			# If timer is out or no matches available
 			add_debug = !add_debug;
