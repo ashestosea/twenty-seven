@@ -101,11 +101,12 @@ func drag_start(tile: Tile):
 	_grid.disable_colliders(tile);
 	change_state_node(_state_drag);
 
-func drop():
+func drop_held_tile():
 	if _drag_tile != null:
 		_drag_tile.held = false;
 		_drag_tile = null;
 		change_state_node(_state_snap);
+		_input.drop_held_tile();
 
 var add_debug = false;
 
